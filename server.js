@@ -1,35 +1,43 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose')
-const lar = require("./routes/api/LoginAndRegister");
-const sa = require("./routes/api/SuperAdmin");
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 const passport = require("passport");
-require('dotenv').config();
+
+const users = require("./routes/api/users");
+const admin = require("./routes/api/admin");
 
 const app = express();
-const port = process.env.PORT || 5001;
 
+// Bodyparser middleware
+app.use(
+  bodyParser.urlencoded({
+    extended: false
+  })
+);
+app.use(bodyParser.json());
 
+// DB Config
+const db = require("./config/keys").mongoURI;
 
-app.use(cors());
-app.use(express.json());
+// Connect to MongoDB
+mongoose
+  .connect(
+    db,
+    { useNewUrlParser: true }
+  )
+  .then(() => console.log("MongoDB successfully connected"))
+  .catch(err => console.log(err));
 
-
-
-const uri = process.env.u;
-mongoose.connect(uri, {useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true })
-const connection = mongoose.connection;
-
+// Passport middleware
 app.use(passport.initialize());
+
+// Passport config
 require("./config/passport")(passport);
-app.use("/api/lar", lar);
-app.use("/api/sa", sa);
 
-connection.once('open', () => {
-    console.log("MongoDB database has established connection");
-})
+// Routes
+app.use("/api/users", users);
+app.use("/api/admin", admin);
 
-app.listen(port, () => {
-    console.log(`Server is up and running-port: ${port}`);
-})
+const port = process.env.PORT || 5000;
 
+app.listen(port, () => console.log(`Server up and running on port ${port} !`));
